@@ -1,0 +1,15 @@
+{
+  "workflow_id": "crayfish_order_001",
+  "steps": [
+    {
+      "agent": "@Searcher",
+      "action": "find_best_crayfish_restaurant",
+      "on_success": { "callback": "@OrderAgent", "payload": "restaurant_data" }
+    },
+    {
+      "agent": "@OrderAgent",
+      "action": "place_order",
+      "on_success": { "callback": "@NotificationAgent", "payload": "order_receipt" }
+    }
+  ]
+}
