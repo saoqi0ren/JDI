@@ -1,1 +1,22 @@
-
+{
+  "version": "1.0.0",
+  "meta": {
+    "name": "JDI_Standard",
+    "motto": "Don't bullshit. Just Do It.",
+    "purpose": "Atomic, action-centric agentic communication"
+  },
+  "protocol": {
+    "unit": {
+      "input": "JSON_SCHEMA",
+      "output": "PURE_DATA",
+      "memory_policy": "ISOLATED"
+    },
+    "flow": {
+      "mechanics": "async_callback_chain",
+      "transit": {
+        "on_success": "next_node_payload",
+        "on_failure": "fallback_error_log"
+      }
+    }
+  }
+}
