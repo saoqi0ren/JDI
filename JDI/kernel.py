@@ -2,6 +2,7 @@ import subprocess
 import os
 import json
 import time
+import re
 from flask import Flask, request, jsonify
 
 app = Flask(__name__)
@@ -103,6 +104,28 @@ def jdi_git():
             
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)})
+
+@app.route("/jdi/restore", methods=["POST"])
+def jdi_restore():
+    """
+    新功能：接收 SESSION.md 内容并校验当前环境一致性
+    """
+    data = request.json
+    session_text = data.get("content", "")
+    
+    # 使用正则提取存档中的路径
+    saved_path_match = re.search(r"BASE_PATH: `(.+?)`", session_text)
+    saved_path = saved_path_match.group(1) if saved_path_match else "Unknown"
+    
+    is_match = (saved_path == BASE_PATH)
+    
+    return jsonify({
+        "status": "success" if is_match else "warning",
+        "current_env": BASE_PATH,
+        "saved_env": saved_path,
+        "match": is_match,
+        "message": "环境完全一致，可以继续开发" if is_match else "检测到环境路径变更，请确认配置"
+    })
 
 @app.route("/jdi/write", methods=["POST"])
 def jdi_write():
