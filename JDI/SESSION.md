@@ -1,23 +1,27 @@
-# JDI Session Snapshot
-Timestamp: 2026-03-13 16:22:01
-Last Message: gemini 状态保存增强
+# JDI Deep Session Snapshot
+**Timestamp**: 2026-03-13 16:25:42
+**Commit Message**: feat: 注入内核自省功能，实现深度记忆同步
 
-## System Context
+## 1. System Environment
 - BASE_PATH: `/Users/liuzhenxing/vscode_workplace/menu/JDI`
 - PYTHON_EXE: `/Users/liuzhenxing/vscode_workplace/menu/.venv/bin/python3`
 
-## Active Routes
-- `POST /jdi/git`: Git sync with auto-identity
-- `POST /jdi/write`: Persistent file writing
-- `POST /jdi/run`: Async script execution
-- `GET /jdi/logs`: Real-time tailing of monitor.log
-- `GET /jdi/status`: JSON memory state
+## 2. Kernel Logic (Self-Reflected)
+Current registered routes in `kernel.py`:
+- `routes = [line.strip() for line in lines if "@app.route" in line]`
+- `@app.route("/jdi/git", methods=["POST"])`
+- `@app.route("/jdi/write", methods=["POST"])`
+- `@app.route("/jdi/run", methods=["POST"])`
+- `@app.route("/jdi/logs", methods=["GET"])`
+- `@app.route("/jdi/status", methods=["GET"])`
 
-## Project Inventory
+## 3. Project Inventory
+Files currently in the workspace:
 - task.py
 - monitor.py
 - kernel.py
 - README.md
 - sync.sh
+- .jdi_status.json
 - SESSION.md
 - jdi.py

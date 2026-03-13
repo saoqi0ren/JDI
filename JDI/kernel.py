@@ -28,6 +28,19 @@ def update_status(action, details):
     except Exception as e:
         print(f"状态写入失败: {e}")
 
+def get_kernel_summary():
+    """
+    自省功能：读取 kernel.py 自身的关键部分，用于辅助 AI 恢复记忆
+    """
+    try:
+        with open(__file__, "r", encoding="utf-8") as f:
+            lines = f.readlines()
+            # 提取所有路由定义
+            routes = [line.strip() for line in lines if "@app.route" in line]
+            return routes
+    except:
+        return []
+
 @app.route("/jdi/git", methods=["POST"])
 def jdi_git():
     """
@@ -46,28 +59,31 @@ def jdi_git():
         subprocess.run(["git", "config", "user.email", "jdi@robot.local"], cwd=BASE_PATH)
         subprocess.run(["git", "config", "http.version", "HTTP/1.1"], cwd=BASE_PATH)
 
-        # --- 增强版 SESSION 快照：让 AI 真正恢复记忆 ---
+        # --- 增强版深度快照逻辑 ---
+        kernel_routes = get_kernel_summary()
         session_content = [
-            f"# JDI Session Snapshot",
-            f"Timestamp: {time.strftime('%Y-%m-%d %H:%M:%S')}",
-            f"Last Message: {message}",
-            f"\n## System Context",
+            f"# JDI Deep Session Snapshot",
+            f"**Timestamp**: {time.strftime('%Y-%m-%d %H:%M:%S')}",
+            f"**Commit Message**: {message}",
+            f"\n## 1. System Environment",
             f"- BASE_PATH: `{BASE_PATH}`",
             f"- PYTHON_EXE: `{PYTHON_EXE}`",
-            f"\n## Active Routes",
-            f"- `POST /jdi/git`: Git sync with auto-identity",
-            f"- `POST /jdi/write`: Persistent file writing",
-            f"- `POST /jdi/run`: Async script execution",
-            f"- `GET /jdi/logs`: Real-time tailing of monitor.log",
-            f"- `GET /jdi/status`: JSON memory state",
-            f"\n## Project Inventory",
+            f"\n## 2. Kernel Logic (Self-Reflected)",
+            "Current registered routes in `kernel.py`:",
         ]
+        for r in kernel_routes:
+            session_content.append(f"- `{r}`")
+
+        session_content.extend([
+            f"\n## 3. Project Inventory",
+            "Files currently in the workspace:",
+        ])
         
-        # 列出当前目录下的所有脚本，作为记忆索引
-        files = [f for f in os.listdir(BASE_PATH) if f.endswith(('.py', '.sh', '.md'))]
+        files = [f for f in os.listdir(BASE_PATH) if f.endswith(('.py', '.sh', '.md', '.json'))]
         for f in files:
             session_content.append(f"- {f}")
 
+        # 写入 SESSION.md 存档
         with open(os.path.join(BASE_PATH, "SESSION.md"), "w", encoding="utf-8") as f:
             f.write("\n".join(session_content))
 
