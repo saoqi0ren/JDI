@@ -1,6 +1,6 @@
 # JDI Deep Session Snapshot
-**Timestamp**: 2026-03-13 17:16:12
-**Commit Message**: JDI Auto-sync: 2026-03-13 17:16:12
+**Timestamp**: 2026-03-13 19:16:08
+**Commit Message**: JDI: sync 19:16:08
 
 ## 1. System Environment
 - BASE_PATH: `/Users/liuzhenxing/vscode_workplace/menu/JDI`
@@ -19,13 +19,17 @@ Current registered routes in `kernel.py`:
 ## 3. Project Inventory
 Files currently in the workspace:
 - task.py
+- .jdi_state.json
 - monitor.py
 - kernel.py
 - jdi_cli.py
 - README.md
+- jdi_writer.py
 - sync.sh
 - JDI_MANIFEST.md
 - .jdi_status.json
+- @run jdi_writer.py
 - sys_monitor.py
 - SESSION.md
 - jdi.py
+- archive_logs.py
