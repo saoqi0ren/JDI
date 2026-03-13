@@ -2,75 +2,126 @@ import requests
 import sys
 import json
 import time
+import subprocess
+import os
 
-# 内核地址
+# Configuration
 KERNEL_URL = "http://localhost:9000"
+BASE_PATH = "/Users/liuzhenxing/vscode_workplace/menu/JDI"
+KERNEL_SCRIPT = "kernel.py"
+
+def check_kernel():
+    """Check if the JDI Kernel is currently online."""
+    try:
+        response = requests.get(f"{KERNEL_URL}/jdi/status", timeout=1)
+        return response.status_code == 200
+    except:
+        return False
+
+def start_kernel():
+    """Attempt to start the Kernel process in the background."""
+    print("🛰  Attempting to launch JDI Kernel...")
+    try:
+        # Start kernel.py as a background process
+        log_file = open(os.path.join(BASE_PATH, "kernel.log"), "a")
+        subprocess.Popen(
+            [sys.executable, KERNEL_SCRIPT],
+            cwd=BASE_PATH,
+            stdout=log_file,
+            stderr=log_file,
+            start_new_session=True
+        )
+        time.sleep(2)  # Wait for Flask to initialize
+        if check_kernel():
+            print("✅ Kernel launched successfully on port 9000.")
+            return True
+        else:
+            print("❌ Kernel failed to respond after launch.")
+            return False
+    except Exception as e:
+        print(f"💥 Failed to launch Kernel: {e}")
+        return False
 
 def send_command(text):
+    """Parse and execute JDI commands."""
     try:
-        # 1. 封装高频同步指令 (@sync 或 @s)
-        if text.startswith("@sync") or text.startswith("@s"):
-            # 提取消息内容，如果没有则使用默认时间戳
+        # 1. Start Command
+        if text == "@start":
+            if check_kernel():
+                print("ℹ️  Kernel is already running.")
+            else:
+                start_kernel()
+
+        # 2. Sync Command (@sync or @s)
+        elif text.startswith("@sync") or text.startswith("@s"):
             parts = text.split(" ", 1)
             msg = parts[1].strip() if len(parts) > 1 else f"JDI Auto-sync: {time.strftime('%Y-%m-%d %H:%M:%S')}"
             
-            print(f"📦 正在准备同步，消息内容: {msg}")
+            print(f"📦 Preparing sync: {msg}")
             res = requests.post(f"{KERNEL_URL}/jdi/git", json={"message": msg})
             result = res.json()
             
             if result.get("status") == "success":
-                print(f"✅ 同步成功: GitHub 已更新")
+                print(f"✅ Sync successful: GitHub updated.")
             else:
-                print(f"❌ 同步失败: {result.get('message')}")
+                print(f"❌ Sync failed: {result.get('message')}")
             
-        # 2. 运行脚本指令
+        # 3. Run Script Command
         elif text.startswith("@run "):
             script = text.replace("@run ", "").strip()
             res = requests.post(f"{KERNEL_URL}/jdi/run", json={"script": script})
-            print(f"🚀 内核响应: {res.json().get('message')}")
+            print(f"🚀 Kernel: {res.json().get('message')}")
             
-        # 3. 日志读取指令
+        # 4. Log Retrieval (@logs or @l)
         elif text == "@logs" or text == "@l":
             res = requests.get(f"{KERNEL_URL}/jdi/logs")
             data = res.json()
             if data.get("status") == "success":
                 logs = data.get("logs", [])
-                print("\n--- 实时日志预览 (最近20行) ---")
+                print("\n--- Real-time Log Stream (Last 20 lines) ---")
                 if not logs:
-                    print("暂无日志数据。")
+                    print("No log data available.")
                 else:
                     for line in logs:
                         print(line)
             else:
-                print(f"❌ 获取日志失败: {data.get('message')}")
+                print(f"❌ Log fetch failed: {data.get('message')}")
 
-        # 4. 状态快照
+        # 5. Status Snapshots
         elif text == "@status":
             res = requests.get(f"{KERNEL_URL}/jdi/status")
-            print(f"🧠 当前内核记忆快照: {json.dumps(res.json(), indent=2, ensure_ascii=False)}")
+            print(f"🧠 Kernel Memory Snapshot: {json.dumps(res.json(), indent=2, ensure_ascii=False)}")
                 
         else:
-            print("❓ 未知指令。目前支持: \n  @s / @sync [信息] (默认使用时间戳)\n  @run [脚本名]\n  @l / @logs\n  @status")
+            print("❓ Unknown command. Supported: \n  @start           (Launch Kernel)\n  @s / @sync [msg] (Git Sync)\n  @run [script]    (Execute script)\n  @l / @logs       (Tailing logs)\n  @status          (System memory)")
             
     except Exception as e:
-        print(f"💥 通信异常: {str(e)}")
+        print(f"💥 Connection Error: Ensure Kernel is running. Try '@start'. Details: {str(e)}")
 
 if __name__ == "__main__":
+    print("--- JDI Command Center ---")
+    
+    # Auto-check on startup
+    if not check_kernel():
+        print("⚠️  Kernel is offline.")
+        user_input = input("Would you like to start the Kernel now? (y/n): ").lower()
+        if user_input == 'y':
+            start_kernel()
+    else:
+        print("✅ Kernel is online and connected.")
+
     if len(sys.argv) > 1:
-        # 支持直接命令行传参: python jdi_cli.py "@s"
         send_command(" ".join(sys.argv[1:]))
     else:
-        # 进入交互模式
-        print("--- JDI 交互终端 (已连接至 Kernel: 9000) ---")
-        print("输入 @指令 操控系统，或输入 exit 退出。")
+        print("Type @command to control the system, or 'exit' to quit.")
         while True:
             try:
                 cmd = input("JDI > ").strip()
                 if not cmd: continue
                 if cmd.lower() in ['exit', 'quit']: 
-                    print("退出终端。")
+                    print("Terminal closed.")
                     break
                 send_command(cmd)
             except KeyboardInterrupt:
-                print("\n检测到中断，退出终端。")
+                print("\nInterrupted, exiting.")
                 break
