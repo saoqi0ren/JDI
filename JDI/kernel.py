@@ -41,8 +41,11 @@ def jdi_git():
         if not os.path.exists(BASE_PATH):
             return jsonify({"status": "error", "message": f"路径不存在: {BASE_PATH}"})
 
+        # --- 自动配置 Git 身份，防止 Commit 时卡死 ---
+        subprocess.run(["git", "config", "user.name", "JDI-Auto-Robot"], cwd=BASE_PATH)
+        subprocess.run(["git", "config", "user.email", "jdi@robot.local"], cwd=BASE_PATH)
+
         # 针对 HTTP2 framing layer 错误进行网络配置修复
-        # 强制 Git 使用 HTTP/1.1 提高稳定性
         subprocess.run(["git", "config", "http.version", "HTTP/1.1"], cwd=BASE_PATH)
 
         # 在同步前，生成一个 session 快照文件，防止 AI 失忆
