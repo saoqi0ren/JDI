@@ -1,6 +1,6 @@
 # JDI Deep Session Snapshot
-**Timestamp**: 2026-03-13 16:28:54
-**Commit Message**: feat: 自愈式快照读取
+**Timestamp**: 2026-03-13 16:37:04
+**Commit Message**: docs: 增加 AI 指挥官手
 
 ## 1. System Environment
 - BASE_PATH: `/Users/liuzhenxing/vscode_workplace/menu/JDI`
@@ -23,6 +23,7 @@ Files currently in the workspace:
 - kernel.py
 - README.md
 - sync.sh
+- JDI_MANIFEST.md
 - .jdi_status.json
 - SESSION.md
 - jdi.py
