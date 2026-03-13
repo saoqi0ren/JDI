@@ -1,10 +1,9 @@
 {
-    "last_action": "git_push",
-    "last_update": "2026-03-13 16:28:55",
+    "last_action": "script_run",
+    "last_update": "2026-03-13 16:52:40",
     "base_path": "/Users/liuzhenxing/vscode_workplace/menu/JDI",
     "python_exe": "/Users/liuzhenxing/vscode_workplace/menu/.venv/bin/python3",
     "details": {
-        "message": "feat: 自愈式快照读取",
-        "result": "success"
+        "script": "sys_monitor.py"
     }
 }
