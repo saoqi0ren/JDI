@@ -41,6 +41,10 @@ def jdi_git():
         if not os.path.exists(BASE_PATH):
             return jsonify({"status": "error", "message": f"路径不存在: {BASE_PATH}"})
 
+        # 针对 HTTP2 framing layer 错误进行网络配置修复
+        # 强制 Git 使用 HTTP/1.1 提高稳定性
+        subprocess.run(["git", "config", "http.version", "HTTP/1.1"], cwd=BASE_PATH)
+
         # 在同步前，生成一个 session 快照文件，防止 AI 失忆
         session_info = f"# JDI Session Snapshot\nLast Sync: {time.strftime('%Y-%m-%d %H:%M:%S')}\nMessage: {message}\n"
         with open(os.path.join(BASE_PATH, "SESSION.md"), "w", encoding="utf-8") as f:
@@ -48,14 +52,23 @@ def jdi_git():
 
         # 执行 Git 操作
         subprocess.run(["git", "add", "-A"], check=True, cwd=BASE_PATH)
-        subprocess.run(["git", "commit", "-m", message], cwd=BASE_PATH)
+        
+        # 检查是否有改动需要 commit，避免空 commit 报错
+        status_check = subprocess.run(["git", "status", "--porcelain"], capture_output=True, text=True, cwd=BASE_PATH)
+        if status_check.stdout:
+            subprocess.run(["git", "commit", "-m", message], cwd=BASE_PATH)
+        
+        # 执行推送
         res_push = subprocess.run(["git", "push"], capture_output=True, text=True, cwd=BASE_PATH)
         
         if res_push.returncode == 0:
             update_status("git_push", {"message": message, "result": "success"})
             return jsonify({"status": "success", "output": res_push.stdout})
         else:
-            return jsonify({"status": "error", "message": res_push.stderr})
+            # 捕获并返回具体的 Git 错误
+            error_msg = res_push.stderr
+            print(f"Git Push 失败详情: {error_msg}")
+            return jsonify({"status": "error", "message": error_msg})
             
     except Exception as e:
         print(f"发生异常: {str(e)}")
